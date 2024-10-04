@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record">Stop Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let currentStream;
+        let recordingInterval;
+        let chunkCount = 0;
+
+        const video = document.querySelector('video');
+        const startRecordButton = document.getElementById('start-record');
+        const stopRecordButton = document.getElementById('stop-record');
+
+        async function init() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            currentStream = stream;
+        }
+
+        startRecordButton.addEventListener('click', () => {
+            startRecording();
+            // Schedule to stop the current recording and start a new one every 2 seconds
+            recordingInterval = setInterval(() => {
+                mediaRecorder.stop(); // Stop the current recording
+                startRecording(); // Start a new recording immediately
+            }, 2000);
+        });
+
+        stopRecordButton.addEventListener('click', () => {
+            clearInterval(recordingInterval);
+            mediaRecorder.stop();
+        });
+
+        function startRecording() {
+            const options = { mimeType: 'video/webm; codecs=vp9' };
+            mediaRecorder = new MediaRecorder(currentStream, options);
+
+            let recordedChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const formData = new FormData();
+                formData.append('video', blob, `video_${chunkCount++}.webm`);
+
+                try {
+                    await fetch(`http://localhost:3000/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    console.log('Chunk uploaded successfully!');
+                } catch (error) {
+                    console.error('Error uploading chunk:', error);
+                }
+
+                recordedChunks = [];
+            };
+
+            mediaRecorder.start();
+        }
+
+        init();
+    </script>
+</body>
+</html>

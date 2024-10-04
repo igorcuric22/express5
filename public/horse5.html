@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record">Stop Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let recordedBlobs;
+        let chunkCount = 0;
+        let intervalId;
+
+        const video = document.querySelector('video');
+        const startRecordButton = document.getElementById('start-record');
+        const stopRecordButton = document.getElementById('stop-record');
+
+        async function init() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+
+            const options = { mimeType: 'video/webm; codecs=vp9' };
+            recordedBlobs = [];
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedBlobs.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+                
+                const formData = new FormData();
+                formData.append('video', blob, `example_${chunkCount}.webm`);
+
+                await fetch(`http://localhost:3000/upload/example_${chunkCount}.webm`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                chunkCount++;
+                recordedBlobs = [];
+                mediaRecorder.start();
+            };
+        }
+
+        startRecordButton.addEventListener('click', () => {
+            mediaRecorder.start();
+            intervalId = setInterval(() => {
+                mediaRecorder.stop();
+            }, 6000);
+        });
+
+        stopRecordButton.addEventListener('click', () => {
+            clearInterval(intervalId);
+            mediaRecorder.stop();
+        });
+
+        init();
+    </script>
+</body>
+</html>

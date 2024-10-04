@@ -1,0 +1,287 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Video from Chunks</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" controls></video>
+    <button id="play-video">Play Uploaded Video</button>
+
+    <script>
+        const video = document.querySelector('video');
+        const playVideoButton = document.getElementById('play-video');
+
+        playVideoButton.addEventListener('click', () => {
+            const mediaSource = new MediaSource();
+            video.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+                fetchAndAppendChunks(sourceBuffer, mediaSource);
+            });
+        });
+
+        async function fetchAndAppendChunks(sourceBuffer, mediaSource) {
+            let chunkNumber = 0;
+
+            async function fetchNextChunk() {
+                try {
+                    const response = await fetch(`/download/example_${chunkNumber}.webm`);
+                    if (response.status === 404) {
+                        if (mediaSource.readyState === 'open') {
+                            mediaSource.endOfStream();
+                        }
+                        return;
+                    }
+
+                    const data = await response.arrayBuffer();
+                    sourceBuffer.appendBuffer(data);
+                    chunkNumber++;
+                } catch (error) {
+                    console.error('Error fetching video chunk:', error);
+                }
+            }
+
+            sourceBuffer.addEventListener('updateend', () => {
+                if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
+                    fetchNextChunk();
+                }
+            });
+
+            fetchNextChunk();
+         
+        }
+    </script>
+</body>
+</html> -->
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Video from Chunks</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" controls></video>
+    <button id="play-video">Play Uploaded Video</button>
+
+    <script>
+        const video = document.querySelector('video');
+        const playVideoButton = document.getElementById('play-video');
+
+        playVideoButton.addEventListener('click', () => {
+            const mediaSource = new MediaSource();
+            video.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+                fetchAndAppendChunks(sourceBuffer, mediaSource);
+            });
+        });
+
+        async function fetchAndAppendChunks(sourceBuffer, mediaSource) {
+            let chunkNumber = 1;
+            const fetchInterval = 5000; // Fetch every 5 seconds
+
+            async function fetchNextChunk() {
+                try {
+                    const response = await fetch(`/download/example_${chunkNumber}.webm`);
+                    if (response.status === 404) {
+                        if (mediaSource.readyState === 'open') {
+                            mediaSource.endOfStream();
+                        }
+                        return;
+                    }
+
+                    const data = await response.arrayBuffer();
+                    sourceBuffer.appendBuffer(data);
+                    chunkNumber++;
+                } catch (error) {
+                    console.error('Error fetching video chunk:', error);
+                }
+            }
+
+            sourceBuffer.addEventListener('updateend', () => {
+                if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
+                    setTimeout(fetchNextChunk, fetchInterval);
+                }
+            });
+
+            fetchNextChunk();
+        }
+    </script>
+</body>
+</html>
+ -->
+
+ <!-- <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Streaming Video Player</title>
+ </head>
+ <body>
+     <video id="video" controls autoplay></video>
+     <script>
+         async function registerPlayer(mediaSource) {
+             const videoBuffer = mediaSource.addSourceBuffer('video/webm;codecs=vp9');
+             let countDownloadChunk = 1;
+ 
+             const downloadAndAppendChunk = async () => {
+                 try {
+                     const url = `/download/example_${countDownloadChunk}.webm`;
+                     console.log('Fetching:', url);
+                     const response = await fetch(url);
+                     if (!response.ok) {
+                         throw new Error(`Failed to fetch chunk: ${response.status} ${response.statusText}`);
+                     }
+                     const buffer = await response.arrayBuffer();
+                     videoBuffer.appendBuffer(buffer);
+                     countDownloadChunk++;
+                 } catch (error) {
+                     console.error('Error fetching or appending chunk:', error);
+                 }
+             };
+ 
+             setInterval(downloadAndAppendChunk, 5000);
+         }
+ 
+         document.addEventListener('DOMContentLoaded', () => {
+             const video = document.getElementById('video');
+             const mediaSource = new MediaSource();
+ 
+             mediaSource.addEventListener('sourceopen', () => {
+                 registerPlayer(mediaSource);
+             });
+ 
+             video.src = URL.createObjectURL(mediaSource);
+         });
+     </script>
+ </body>
+ </html> -->
+ 
+ <!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Video from Chunks</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" controls></video>
+    <button id="play-video">Play Uploaded Video</button>
+
+    <script>
+        const video = document.querySelector('video');
+        const playVideoButton = document.getElementById('play-video');
+
+        playVideoButton.addEventListener('click', () => {
+            const mediaSource = new MediaSource();
+            video.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+                fetchAndAppendChunks(sourceBuffer, mediaSource);
+            });
+        });
+
+        async function fetchAndAppendChunks(sourceBuffer, mediaSource) {
+            let chunkNumber = 1;
+            const fetchInterval = 5000; // Fetch every 5 seconds
+
+            async function fetchNextChunk() {
+                try {
+                    const response = await fetch(`/download/example_${chunkNumber}.webm`);
+                    if (response.status === 404) {
+                        if (mediaSource.readyState === 'open') {
+                            mediaSource.endOfStream();
+                        }
+                        return;
+                    }
+
+                    const data = await response.arrayBuffer();
+                    sourceBuffer.appendBuffer(data);
+                    chunkNumber++;
+                } catch (error) {
+                    console.error('Error fetching video chunk:', error);
+                    if (mediaSource.readyState === 'open') {
+                        mediaSource.endOfStream();
+                    }
+                }
+            }
+
+            sourceBuffer.addEventListener('updateend', () => {
+                if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
+                    setTimeout(fetchNextChunk, fetchInterval);
+                }
+            });
+
+            fetchNextChunk();
+        }
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Video Player</title>
+</head>
+<body>
+    <video id="video" controls autoplay></video>
+    <script>
+        async function registerPlayer(mediaSource) {
+            const videoBuffer = mediaSource.addSourceBuffer('video/webm;codecs=vp9');
+            let countDownloadChunk = 1;
+            let fetchInterval=5000;
+
+            const downloadAndAppendChunk = async () => {
+                if (!videoBuffer.updating && mediaSource.readyState === 'open') {
+                    try {
+                        const url = `/download/example_${countDownloadChunk}.webm`;
+                        console.log('Fetching:', url);
+                        const response = await fetch(url);
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch chunk: ${response.status} ${response.statusText}`);
+                        }
+                        const buffer = await response.arrayBuffer();
+                        videoBuffer.appendBuffer(buffer);
+                        countDownloadChunk++;
+                    } catch (error) {
+                        console.error('Error fetching or appending chunk:', error);
+                    }
+                }
+            };
+
+            // videoBuffer.addEventListener('updateend', downloadAndAppendChunk);
+
+            videoBuffer.addEventListener('updateend', () => {
+                if (!videoBuffer.updating && mediaSource.readyState === 'open') {
+                    setTimeout(downloadAndAppendChunk , fetchInterval);
+                }
+            });
+
+            downloadAndAppendChunk();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('video');
+            const mediaSource = new MediaSource();
+
+            mediaSource.addEventListener('sourceopen', () => {
+                registerPlayer(mediaSource);
+            });
+
+            video.src = URL.createObjectURL(mediaSource);
+        });
+    </script>
+</body>
+</html>
+

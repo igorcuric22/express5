@@ -1,0 +1,271 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Stream</title>
+</head>
+<body>
+    <h1>Webcam Stream</h1>
+    <video id="videoElement" width="640" height="480" autoplay></video><br>
+    <button onclick="startStreaming()">Start Streaming</button>
+    <button onclick="stopStreaming()">Stop Streaming</button>
+    <div id="downloadLinks"></div>
+    <video id="playbackElement" width="640" height="480" controls></video>
+
+    <script>
+        let mediaRecorder;
+        let chunks = [];
+        let currentStream;
+        let recordingInterval;
+        let downloadCount = 0;
+        let playbackQueue = [];
+        let isPlaying = false;
+        let mediaSource = new MediaSource();
+        let sourceBuffer;
+
+        document.getElementById('playbackElement').src = URL.createObjectURL(mediaSource);
+
+        mediaSource.addEventListener('sourceopen', () => {
+            sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8, vorbis"');
+            sourceBuffer.addEventListener('updateend', () => {
+                if (playbackQueue.length > 0 && !sourceBuffer.updating) {
+                    appendNextChunk();
+                }
+            });
+        });
+
+        async function startStreaming() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const videoElement = document.getElementById('videoElement');
+                videoElement.srcObject = stream;
+
+                currentStream = stream;
+
+                let options = { mimeType: 'video/webm; codecs=vp9' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options = { mimeType: 'video/webm; codecs=vp8' };
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        options = { mimeType: 'video/webm' };
+                    }
+                }
+
+                mediaRecorder = new MediaRecorder(currentStream, options);
+
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        chunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = function() {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = url;
+                    downloadLink.download = `recording_${downloadCount++}.webm`;
+                    downloadLink.textContent = `Download recording ${downloadCount}`;
+                    document.getElementById('downloadLinks').appendChild(downloadLink);
+
+                    playbackQueue.push(new Uint8Array(chunks));
+                    chunks = []; // Clear chunks array
+
+                    if (recordingInterval) {
+                        startRecording();
+                    }
+
+                    if (!isPlaying) {
+                        playNextChunk();
+                    }
+                };
+
+                function startRecording() {
+                    if (mediaRecorder.state !== "inactive") {
+                        return;
+                    }
+                    mediaRecorder.start();
+                    setTimeout(() => mediaRecorder.stop(), 2000); // Stop recording after 2 seconds
+                }
+
+                startRecording();
+
+                recordingInterval = setInterval(() => {
+                    if (mediaRecorder.state === "inactive") {
+                        startRecording();
+                    }
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error accessing media devices.', error);
+            }
+        }
+
+        function stopStreaming() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+            }
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            clearInterval(recordingInterval);
+            recordingInterval = null;
+            console.log('Streaming stopped.');
+        }
+
+        function playNextChunk() {
+            if (playbackQueue.length > 0) {
+                isPlaying = true;
+                if (mediaSource.readyState === 'open' && !sourceBuffer.updating) {
+                    appendNextChunk();
+                }
+            } else {
+                isPlaying = false;
+            }
+        }
+
+        function appendNextChunk() {
+            if (playbackQueue.length > 0 && !sourceBuffer.updating) {
+                const chunk = playbackQueue.shift();
+                sourceBuffer.appendBuffer(chunk);
+            }
+        }
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Stream</title>
+</head>
+<body>
+    <h1>Webcam Stream</h1>
+    <video id="videoElement" width="640" height="480" autoplay></video><br>
+    <button onclick="startStreaming()">Start Streaming</button>
+    <button onclick="stopStreaming()">Stop Streaming</button>
+    <div id="downloadLinks"></div>
+    <video id="playbackElement" width="640" height="480" controls></video>
+
+    <script>
+        let mediaRecorder;
+        let chunks = [];
+        let currentStream;
+        let recordingInterval;
+        let downloadCount = 0;
+        let playbackQueue = [];
+        let isPlaying = false;
+        let mediaSource = new MediaSource();
+        let sourceBuffer;
+
+        document.getElementById('playbackElement').src = URL.createObjectURL(mediaSource);
+
+        mediaSource.addEventListener('sourceopen', () => {
+            console.log('MediaSource opened');
+            sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
+            sourceBuffer.addEventListener('updateend', () => {
+                console.log('SourceBuffer updateend');
+                if (playbackQueue.length > 0 && !sourceBuffer.updating) {
+                    appendNextChunk();
+                }
+            });
+        });
+
+        async function startStreaming() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const videoElement = document.getElementById('videoElement');
+                videoElement.srcObject = stream;
+
+                currentStream = stream;
+
+                let options = { mimeType: 'video/webm; codecs=vp8' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options = { mimeType: 'video/webm' };
+                }
+
+                mediaRecorder = new MediaRecorder(currentStream, options);
+
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        chunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = function() {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = url;
+                    downloadLink.download = `recording_${downloadCount++}.webm`;
+                    downloadLink.textContent = `Download recording ${downloadCount}`;
+                    document.getElementById('downloadLinks').appendChild(downloadLink);
+
+                    playbackQueue.push(new Uint8Array(chunks));
+                    chunks = []; // Clear chunks array
+
+                    if (recordingInterval) {
+                        startRecording();
+                    }
+
+                    if (!isPlaying) {
+                        playNextChunk();
+                    }
+                };
+
+                function startRecording() {
+                    if (mediaRecorder.state !== "inactive") {
+                        return;
+                    }
+                    mediaRecorder.start();
+                    setTimeout(() => mediaRecorder.stop(), 2000); // Stop recording after 2 seconds
+                }
+
+                startRecording();
+
+                recordingInterval = setInterval(() => {
+                    if (mediaRecorder.state === "inactive") {
+                        startRecording();
+                    }
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error accessing media devices.', error);
+            }
+        }
+
+        function stopStreaming() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+            }
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            clearInterval(recordingInterval);
+            recordingInterval = null;
+            console.log('Streaming stopped.');
+        }
+
+        function playNextChunk() {
+            if (playbackQueue.length > 0) {
+                isPlaying = true;
+                if (mediaSource.readyState === 'open' && !sourceBuffer.updating) {
+                    appendNextChunk();
+                }
+            } else {
+                isPlaying = false;
+            }
+        }
+
+        function appendNextChunk() {
+            if (playbackQueue.length > 0 && !sourceBuffer.updating) {
+                const chunk = playbackQueue.shift();
+                sourceBuffer.appendBuffer(chunk);
+            }
+        }
+    </script>
+</body>
+</html>

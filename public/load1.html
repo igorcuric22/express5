@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Streaming Player</title>
+</head>
+<body>
+    <h1>Video Streaming Player</h1>
+    <video id="videoPlayer" controls></video>
+    <br>
+    <button id="startButton">Start Streaming</button>
+
+    <script>
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     const videoPlayer = document.getElementById('videoPlayer');
+        //     const startButton = document.getElementById('startButton');
+        //     const STREAM_NAME='example'; // Replace with your stream name
+
+        //     let mediaSource;
+        //     let videoBuffer;
+        //     let countDownloadChunk = 0;
+        //     let isStreaming = false;
+        
+
+        //     startButton.addEventListener('click', async () => {
+        //         if (!isStreaming) {
+        //             startButton.disabled = true;
+        //             isStreaming = true;
+
+        //             try {
+        //                 // Create or reset MediaSource and videoBuffer
+        //                 if (!mediaSource) {
+        //                     mediaSource = new MediaSource();
+        //                     videoPlayer.src = URL.createObjectURL(mediaSource);
+        //                     mediaSource.addEventListener('sourceopen', () => {
+        //                         videoBuffer = mediaSource.addSourceBuffer('video/webm;codecs=vp8');
+        //                         fetchAndAppendChunks();
+        //                     });
+        //                 } else {
+        //                     fetchAndAppendChunks();
+        //                 }
+        //             } catch (error) {
+        //                 console.error('Error starting streaming:', error);
+        //                 isStreaming = false;
+        //                 startButton.disabled = false;
+        //             }
+        //         }
+        //     });
+
+        //     async function fetchAndAppendChunks() {
+        //         try {
+        //             const response = await fetch(`/download?name=${STREAM_NAME}&chunk=${countDownloadChunk}`);
+
+        //             if (!response.ok) {
+        //                 throw new Error('Fetch failed');
+        //             }
+
+        //             const buffer = await response.arrayBuffer();
+        //             videoBuffer.appendBuffer(buffer);
+        //             countDownloadChunk++;
+
+        //             // Continue fetching next chunk if still streaming
+        //             if (isStreaming) {
+        //                 setTimeout(fetchAndAppendChunks, 1000); // Fetch next chunk after 1 second
+        //             }
+        //         } catch (error) {
+        //             console.error('Error fetching or appending chunk:', error);
+        //             isStreaming = false;
+        //             startButton.disabled = false;
+        //         }
+        //     }
+        // });
+
+//         document.addEventListener('DOMContentLoaded', () => {
+//     const videoPlayer = document.getElementById('videoPlayer');
+//     const STREAM_NAME = 'example'; // Replace with your stream name
+
+//     let mediaSource;
+//     let videoBuffer;
+//     let countDownloadChunk = 0;
+//     let isStreaming = false;
+
+//     async function startStreaming() {
+//         if (isStreaming) return;
+
+//         isStreaming = true;
+
+//         try {
+//             // Initialize MediaSource if not already initialized
+//             if (!mediaSource) {
+//                 mediaSource = new MediaSource();
+//                 videoPlayer.src = URL.createObjectURL(mediaSource);
+//                 mediaSource.addEventListener('sourceopen', () => {
+//                     videoBuffer = mediaSource.addSourceBuffer('video/webm;codecs=vp8');
+//                     fetchAndAppendChunks();
+//                 });
+//             } else {
+//                 fetchAndAppendChunks();
+//             }
+//         } catch (error) {
+//             console.error('Error starting streaming:', error);
+//             isStreaming = false;
+//         }
+//     }
+
+//     function fetchAndAppendChunks() {
+//         fetch(`/download?name=${STREAM_NAME}&chunk=${countDownloadChunk}`)
+//             .then(response => {
+//                 if (!response.ok) {
+//                     throw new Error('Fetch failed');
+//                 }
+//                 return response.arrayBuffer();
+//             })
+//             .then(buffer => {
+//                 if (!videoBuffer || mediaSource.readyState !== 'open') {
+//                     throw new Error('MediaSource or SourceBuffer is not ready');
+//                 }
+//                 videoBuffer.appendBuffer(buffer);
+//                 countDownloadChunk++;
+//             })
+//             .catch(error => {
+//                 console.error('Error fetching or appending chunk:', error);
+//                 isStreaming = false;
+//             })
+//             .finally(() => {
+//                 if (isStreaming) {
+//                     setTimeout(fetchAndAppendChunks, 1000); // Fetch next chunk after 1 second
+//                 }
+//             });
+//     }
+
+//     // Start streaming when the button is clicked
+//     document.getElementById('startButton').addEventListener('click', startStreaming);
+// });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const videoPlayer = document.getElementById('videoPlayer');
+    const startButton = document.getElementById('startButton');
+    const STREAM_NAME = 'example'; // Replace with your stream name
+
+    let mediaSource;
+    let videoBuffer;
+    let countDownloadChunk = 0;
+    let isStreaming = false;
+    let isAppending = false;
+
+    startButton.addEventListener('click', () => {
+        if (!isStreaming) {
+            startButton.disabled = true;
+            isStreaming = true;
+            initializeMediaSource();
+        }
+    });
+
+    function initializeMediaSource() {
+        mediaSource = new MediaSource();
+        videoPlayer.src = URL.createObjectURL(mediaSource);
+
+        mediaSource.addEventListener('sourceopen', () => {
+            videoBuffer = mediaSource.addSourceBuffer('video/webm;codecs=vp8');
+            fetchAndAppendChunks();
+        });
+
+        mediaSource.addEventListener('sourceended', () => {
+            console.log('MediaSource ended');
+            cleanup();
+        });
+
+        mediaSource.addEventListener('sourceclose', () => {
+            console.log('MediaSource closed');
+            cleanup();
+        });
+
+        mediaSource.addEventListener('error', () => {
+            console.error('MediaSource error');
+            cleanup();
+        });
+    }
+
+    function fetchAndAppendChunks() {
+        if (!isStreaming) {
+            return;
+        }
+
+        if (isAppending) {
+            console.warn('Already appending, skipping this fetch cycle.');
+            return;
+        }
+
+        isAppending = true;
+
+        fetch(`/download?name=${STREAM_NAME}&chunk=${countDownloadChunk}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fetch failed');
+                }
+                return response.arrayBuffer();
+            })
+            .then(buffer => {
+                if (!videoBuffer || mediaSource.readyState !== 'open') {
+                    throw new Error('MediaSource or SourceBuffer is not ready');
+                }
+                videoBuffer.appendBuffer(buffer);
+                countDownloadChunk++;
+            })
+            .catch(error => {
+                console.error('Error fetching or appending chunk:', error);
+                isStreaming = false;
+                cleanup();
+            })
+            .finally(() => {
+                isAppending = false;
+                if (isStreaming) {
+                    setTimeout(fetchAndAppendChunks, 1000); // Fetch next chunk after 1 second
+                }
+            });
+    }
+
+    function cleanup() {
+        isStreaming = false;
+        startButton.disabled = false;
+        if (mediaSource) {
+            if (mediaSource.readyState === 'open') {
+                mediaSource.endOfStream();
+            }
+            mediaSource = null;
+        }
+        if (videoBuffer) {
+            videoBuffer = null;
+        }
+    }
+});
+
+
+
+    </script>
+</body>
+</html>

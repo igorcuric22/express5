@@ -1,0 +1,295 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record">Stop Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let mediaSource;
+        let sourceBuffer;
+
+        const video = document.querySelector('video');
+        const startRecordButton = document.getElementById('start-record');
+        const stopRecordButton = document.getElementById('stop-record');
+
+        async function init() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+
+            mediaSource = new MediaSource();
+            video.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', handleSourceOpen, false);
+
+            const options = { mimeType: 'video/webm; codecs=vp9' };
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    sourceBuffer.appendBuffer(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                mediaSource.endOfStream();
+                startSendingData();
+            };
+        }
+
+        function handleSourceOpen() {
+            sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+        }
+
+      
+
+        startRecordButton.addEventListener('click', () => {
+    if (mediaRecorder.state === 'inactive') {
+        mediaRecorder.start();
+    } else {
+        console.warn('MediaRecorder is already recording.');
+    }
+});
+
+        stopRecordButton.addEventListener('click', () => {
+            mediaRecorder.stop();
+        });
+
+        function startSendingData() {
+            setInterval(() => {
+                sendData();
+            }, 5000); // 5000 milliseconds = 5 seconds
+        }
+
+        async function sendData() {
+            try {
+                const response=await fetch('http://localhost:3000/upload', {
+                    method: 'POST',
+                    body: mediaSource,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                 }
+
+                const responseData = await response.json(); // Assuming server responds with JSON
+                console.log('Video data sent successfully!', responseData);
+                
+            } catch (error) {
+                console.error('Error sending video data:', error);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html> -->
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record">Stop Recording</button>
+
+    <script>
+
+let mediaRecorder;
+let mediaSource;
+let sourceBuffer;
+
+const video = document.querySelector('video');
+const startRecordButton = document.getElementById('start-record');
+const stopRecordButton = document.getElementById('stop-record');
+
+async function init() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+
+    mediaSource = new MediaSource();
+    video.src = URL.createObjectURL(mediaSource);
+
+    mediaSource.addEventListener('sourceopen', handleSourceOpen, false);
+
+    const options = { mimeType: 'video/webm; codecs=vp9' };
+    mediaRecorder = new MediaRecorder(stream, options);
+
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+            if (sourceBuffer && mediaSource.readyState === 'open') {
+                sourceBuffer.appendBuffer(event.data);
+            }
+        }
+    };
+
+    mediaRecorder.onstop = () => {
+        mediaSource.endOfStream();
+        startSendingData();
+    };
+}
+
+function handleSourceOpen() {
+    sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+}
+
+startRecordButton.addEventListener('click', () => {
+    if (mediaRecorder.state === 'inactive') {
+        mediaRecorder.start();
+    } else {
+        console.warn('MediaRecorder is already recording.');
+    }
+});
+
+stopRecordButton.addEventListener('click', () => {
+    mediaRecorder.stop();
+});
+
+function startSendingData() {
+    setInterval(() => {
+        sendData();
+    }, 5000); // 5000 milliseconds = 5 seconds
+}
+
+async function sendData() {
+    const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+    const formData = new FormData();
+    formData.append('video', blob, 'video.webm');
+
+    try {
+        const response = await fetch('http://localhost:3000/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const responseData = await response.json(); // Assuming server responds with JSON
+        console.log('Video data sent successfully!', responseData);
+    } catch (error) {
+        console.error('Error sending video data:', error);
+    }
+}
+
+init();
+</script>
+</body>
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record">Stop Recording</button>
+
+    <script>
+let mediaRecorder;
+let mediaSource;
+let sourceBuffer;
+let recordedBlobs = []; // Ensure recordedBlobs is defined globally
+
+const video = document.querySelector('video');
+const startRecordButton = document.getElementById('start-record');
+const stopRecordButton = document.getElementById('stop-record');
+
+async function init() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+
+    mediaSource = new MediaSource();
+    video.src = URL.createObjectURL(mediaSource);
+
+    mediaSource.addEventListener('sourceopen', handleSourceOpen, false);
+
+    const options = { mimeType: 'video/webm; codecs=vp9' };
+    mediaRecorder = new MediaRecorder(stream, options);
+
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+            recordedBlobs.push(event.data);
+            if (sourceBuffer && mediaSource.readyState === 'open') {
+                sourceBuffer.appendBuffer(event.data);
+            }
+        }
+    };
+
+    mediaRecorder.onstop = () => {
+        if (mediaSource.readyState === 'open') {
+            mediaSource.endOfStream();
+            startSendingData();
+        } else {
+            console.warn('MediaSource is not in "open" state, cannot end stream.');
+        }
+    };
+}
+
+function handleSourceOpen() {
+    sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+}
+
+startRecordButton.addEventListener('click', () => {
+    if (mediaRecorder.state === 'inactive') {
+        recordedBlobs = []; // Clear recordedBlobs array on new recording
+        mediaRecorder.start();
+    } else {
+        console.warn('MediaRecorder is already recording.');
+    }
+});
+
+stopRecordButton.addEventListener('click', () => {
+    mediaRecorder.stop();
+});
+
+function startSendingData() {
+    setInterval(() => {
+        sendData();
+    }, 5000); // 5000 milliseconds = 5 seconds
+}
+
+async function sendData() {
+    const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+    const formData = new FormData();
+    formData.append('video', blob, 'video.webm');
+
+    try {
+        const response = await fetch('http://localhost:3000/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const responseData = await response.json(); // Assuming server responds with JSON
+        console.log('Video data sent successfully!', responseData);
+    } catch (error) {
+        console.error('Error sending video data:', error);
+    }
+}
+
+init();
+</script>
+</body>
+</html>

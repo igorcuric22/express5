@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebM Chunk Upload</title>
+</head>
+<body>
+  <video id="video" width="640" height="480" autoplay></video>
+  <button id="start">Start Recording</button>
+  <button id="stop">Stop Recording</button>
+
+  <script>
+    const video = document.getElementById('video');
+    const startButton = document.getElementById('start');
+    const stopButton = document.getElementById('stop');
+
+    let mediaRecorder;
+    let chunks = [];
+
+    async function startRecording() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      video.srcObject = stream;
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+      mediaRecorder.ondataavailable = async function(event) {
+        if (event.data.size > 0) {
+          await sendChunk(event.data);
+        }
+      };
+
+      mediaRecorder.start(5000); // Collect 5 seconds of data
+    }
+
+    async function sendChunk(chunk) {
+      const formData = new FormData();
+      formData.append('video', chunk, 'chunk.webm');
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+        console.log(result);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    startButton.addEventListener('click', () => {
+      startRecording();
+    });
+
+    stopButton.addEventListener('click', () => {
+      mediaRecorder.stop();
+      video.srcObject.getTracks().forEach(track => track.stop());
+    });
+  </script>
+</body>
+</html>

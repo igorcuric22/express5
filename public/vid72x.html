@@ -1,0 +1,156 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let recordedBlobs;
+        let recordInterval;
+        const CHUNK_DURATION = 5000; // Duration of each chunk in milliseconds
+
+        const video = document.querySelector('video');
+        const startRecordButton = document.getElementById('start-record');
+
+        async function init() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+
+            const options = { mimeType: 'video/webm; codecs=vp9' };
+            recordedBlobs = [];
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedBlobs.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+                uploadVideo(blob);
+                recordedBlobs = [];
+            };
+        }
+
+        startRecordButton.addEventListener('click', () => {
+            startRecording();
+            recordInterval = setInterval(() => {
+                mediaRecorder.stop();
+                mediaRecorder.start();
+            }, CHUNK_DURATION);
+        });
+
+        async function uploadVideo(blob) {
+            const STREAM_NAME = 'example';
+            let count = 0;
+            const formData = new FormData();
+            formData.append('video', blob, 'video.webm');
+
+            await fetch(`http://localhost:3000/upload/${STREAM_NAME}_${count++}`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            alert('Video chunk uploaded successfully!');
+        }
+
+        function startRecording() {
+            recordedBlobs = [];
+            mediaRecorder.start();
+        }
+
+        init();
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+
+    <script>
+
+let mediaRecorder;
+let recordedBlobs;
+let recordInterval;
+const CHUNK_DURATION = 5000; // Duration of each chunk in milliseconds
+
+const video = document.querySelector('video');
+const startRecordButton = document.getElementById('start-record');
+
+let isInitialized = false;
+
+async function init() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+
+    const options = { mimeType: 'video/webm; codecs=vp9' };
+    recordedBlobs = [];
+    mediaRecorder = new MediaRecorder(stream, options);
+
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+            recordedBlobs.push(event.data);
+        }
+    };
+
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+        uploadVideo(blob);
+        recordedBlobs = [];
+    };
+
+    isInitialized = true; // Flag to indicate initialization is complete
+}
+
+startRecordButton.addEventListener('click', () => {
+    if (isInitialized) {
+        startRecording();
+        recordInterval = setInterval(() => {
+            mediaRecorder.stop();
+            mediaRecorder.start();
+        }, CHUNK_DURATION);
+    } else {
+        console.error('MediaRecorder is not initialized yet.');
+    }
+});
+
+async function uploadVideo(blob) {
+    const STREAM_NAME = 'example';
+    let count = 0;
+    const formData = new FormData();
+    formData.append('video', blob, 'video.webm');
+
+    await fetch(`http://localhost:3000/upload/${STREAM_NAME}_${count++}`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    //alert('Video chunk uploaded successfully!');
+}
+
+function startRecording() {
+    recordedBlobs = [];
+    mediaRecorder.start();
+}
+
+init(); // Initialize mediaRecorder and video stream
+
+</script>
+</body>
+</html>

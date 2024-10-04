@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Camera Streaming - Client 2</title>
+</head>
+<body>
+    <h1>WebRTC Camera Streaming - Client 2</h1>
+    <video id="remoteVideo" autoplay playsinline></video>
+    <script>
+        const remoteVideo = document.getElementById('remoteVideo');
+        let remoteStream = new MediaStream();
+        remoteVideo.srcObject = remoteStream;
+        const peerConnections = {};
+        const socket = new WebSocket('ws://localhost:3000');
+
+        socket.addEventListener('message', async (message) => {
+            const data = JSON.parse(message.data);
+
+            if (data.offer) {
+                const peerConnection = new RTCPeerConnection();
+                peerConnections[data.id] = peerConnection;
+
+                peerConnection.ontrack = (event) => {
+                    event.streams[0].getTracks().forEach(track => {
+                        remoteStream.addTrack(track);
+                    });
+                };
+
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+
+                socket.send(JSON.stringify({
+                    id: data.id,
+                    answer: peerConnection.localDescription
+                }));
+
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        socket.send(JSON.stringify({
+                            id: data.id,
+                            candidate: event.candidate
+                        }));
+                    }
+                };
+            } else if (data.candidate) {
+                const peerConnection = peerConnections[data.id];
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        });
+
+        socket.addEventListener('open', () => {
+            socket.send(JSON.stringify({ id: 'viewer' }));
+        });
+    </script>
+</body>
+</html>

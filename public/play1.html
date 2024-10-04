@@ -1,0 +1,253 @@
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Streaming Example</title>
+</head>
+<body>
+    <video id="myVideo" controls autoplay></video>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const videoElement = document.getElementById('myVideo');
+            const mediaSource = new MediaSource();
+            videoElement.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+                let countDownloadChunk = 1;
+
+                async function fetchAndAppendChunk(url) {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+                    }
+                    const buffer = await response.arrayBuffer();
+                    sourceBuffer.appendBuffer(buffer);
+                    console.log(`Appended chunk ${countDownloadChunk}`);
+                    countDownloadChunk++;
+                }
+
+                async function streamChunks() {
+                    while (true) {
+                        await fetchAndAppendChunk(`/download/example_${countDownloadChunk}.webm`);
+                        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between operations
+                    }
+                }
+
+                streamChunks().then(() => {
+                    videoElement.play().catch(error => {
+                        console.error('play() failed:', error);
+                    });
+                }).catch(error => {
+                    console.error('Error streaming chunks:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Streaming Example</title>
+</head>
+<body>
+    <video id="myVideo" controls autoplay></video>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const videoElement = document.getElementById('myVideo');
+            const mediaSource = new MediaSource();
+            videoElement.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+                let countDownloadChunk = 1;
+                let queue = []; // Queue for appendBuffer tasks
+                let isAppending = false; // Flag to track if appendBuffer is in progress
+
+                async function fetchAndAppendChunk(url) {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+                    }
+                    const buffer = await response.arrayBuffer();
+                    sourceBuffer.appendBuffer(new Uint8Array(buffer));
+                    console.log(`Appended chunk ${countDownloadChunk}`);
+                    countDownloadChunk++;
+                }
+
+                async function streamChunks() {
+                    try {
+                        while (true) {
+                            if (!isAppending && queue.length > 0) {
+                                isAppending = true;
+                                await queue.shift()(); // Execute next appendBuffer task
+                                isAppending = false;
+                            }
+                            await new Promise(resolve => setTimeout(resolve, 100)); // Delay between operations
+                        }
+                    } catch (error) {
+                        console.error('Error streaming chunks:', error);
+                    }
+                }
+
+                streamChunks().then(() => {
+                    videoElement.play().catch(error => {
+                        console.error('play() failed:', error);
+                    });
+                }).catch(error => {
+                    console.error('Error streaming chunks:', error);
+                });
+
+                // Start initial chunk fetch
+                queue.push(() => fetchAndAppendChunk(`/download/example_${countDownloadChunk}.webm`));
+            });
+        });
+    </script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fetch and Play Dynamic Video Segments</title>
+</head>
+<body>
+  <video id="myVideo" controls>
+    <source src="" type="video/webm">
+    Your browser does not support the video tag.
+  </video>
+
+  <script>
+    // Function to fetch and play video from two segments with dynamic URLs
+    function fetchAndPlayDynamicSegments(baseVideoUrl, segment1Index, segment2Index) {
+      const videoUrl1 = `${baseVideoUrl}${segment1Index}.webm`;
+      const videoUrl2 = `${baseVideoUrl}${segment2Index}.webm`;
+
+      // Fetch and play the first segment
+      fetch(videoUrl1)
+        .then(response => response.blob())
+        .then(blob1 => {
+          const video = document.getElementById('myVideo');
+          const videoURL1 = URL.createObjectURL(blob1);
+          video.src = videoURL1;
+
+          video.addEventListener('loadedmetadata', function() {
+            video.currentTime = 0; // Start from the beginning of the first segment
+            video.play();
+
+            // Listen for end of the first segment
+            video.addEventListener('timeupdate', function onTimeUpdate() {
+              if (video.currentTime >= video.duration) {
+                video.removeEventListener('timeupdate', onTimeUpdate); // Remove listener
+                video.pause();
+
+                // Fetch and play the second segment
+                fetch(videoUrl2)
+                  .then(response => response.blob())
+                  .then(blob2 => {
+                    const videoURL2 = URL.createObjectURL(blob2);
+                    video.src = videoURL2;
+                    video.currentTime = 0; // Start from the beginning of the second segment
+                    video.play();
+                  })
+                  .catch(error => {
+                    console.error('Error loading the second video segment:', error);
+                  });
+              }
+            });
+          });
+        })
+        .catch(error => {
+          console.error('Error loading the first video segment:', error);
+        });
+    }
+
+    // Example usage: fetch and play `/download/example_1.webm` followed by `/download/example_2.webm`
+    const baseVideoUrl = '/download/example_';
+    const segment1Index = 1;
+    const segment2Index = 2;
+    fetchAndPlayDynamicSegments(baseVideoUrl, segment1Index, segment2Index);
+  </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Video Example</title>
+</head>
+<body>
+
+    <video id="myVideo" controls></video>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const videoElement = document.getElementById('myVideo');
+
+            // Function to start video playback
+            async function startPlayback() {
+                try {
+                    await videoElement.play();
+                } catch (error) {
+                    console.error('play() failed:', error);
+                }
+            }
+
+            // Wait for user interaction before playing
+            document.addEventListener('click', async () => {
+                await startPlayback();
+            });
+
+            // Optional: Handle other user interactions that can trigger playback
+            document.addEventListener('keydown', async (event) => {
+                // For example, play video on pressing spacebar
+                if (event.code === 'Space') {
+                    await startPlayback();
+                }
+            });
+
+            // Setting up MediaSource and segment appending logic
+            const mediaSource = new MediaSource();
+            videoElement.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+
+                async function fetchAndAppendSegment(url) {
+                    const response = await fetch(url);
+                    const arrayBuffer = await response.arrayBuffer();
+                    sourceBuffer.appendBuffer(new Uint8Array(arrayBuffer));
+                }
+
+                const segmentUrls = [
+                    '/download/example_1.webm',
+                    '/download/example_2.webm',
+                    '/download/example_3.webm',
+                ];
+
+                for (let i = 0; i < segmentUrls.length; i++) {
+                    await fetchAndAppendSegment(segmentUrls[i]);
+                    console.log(`Appended segment ${i + 1}`);
+                }
+
+                // Attempt to start playback after segments are appended
+                await startPlayback();
+            });
+        });
+    </script>
+</body>
+</html>

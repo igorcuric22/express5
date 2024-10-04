@@ -1,0 +1,242 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load WebM Chunks Sequentially</title>
+</head>
+<body>
+    <video id="videoPlayer" controls></video>
+    <script>
+        async function fetchVideoChunk(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.arrayBuffer();
+        }
+
+        async function appendChunk(sourceBuffer, url) {
+            try {
+                const chunk = await fetchVideoChunk(url);
+                sourceBuffer.appendBuffer(chunk);
+                console.log(`Appended chunk from ${url}`);
+            } catch (error) {
+                console.error(`Error appending chunk from ${url}:`, error);
+            }
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function loadSegment(sourceBuffer, segmentIndex) {
+            const url = `/download/example_${segmentIndex}.webm`;
+            await appendChunk(sourceBuffer, url);
+        }
+
+        async function loadVideoChunks() {
+            const videoPlayer = document.getElementById('videoPlayer');
+            const mediaSource = new MediaSource();
+            let segmentIndex = 0;
+
+            videoPlayer.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                console.log('MediaSource opened');
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+
+                sourceBuffer.addEventListener('updateend', async () => {
+                    console.log('SourceBuffer updateend');
+                    if (sourceBuffer.updating) return;
+
+                    segmentIndex++;
+                    if (segmentIndex < 4) {
+                        await delay(5000); // Delay before loading the next segment
+                        await loadSegment(sourceBuffer, segmentIndex);
+                    } else if (mediaSource.readyState === 'open') {
+                        console.log('All chunks appended, ending stream');
+                        mediaSource.endOfStream();
+                    }
+                });
+
+                await loadSegment(sourceBuffer, segmentIndex);
+            });
+
+            mediaSource.addEventListener('sourceended', () => {
+                console.log('MediaSource ended');
+            });
+
+            mediaSource.addEventListener('error', (e) => {
+                console.error('MediaSource error:', e);
+            });
+
+            mediaSource.addEventListener('sourceclose', () => {
+                console.log('MediaSource closed');
+            });
+        }
+
+        loadVideoChunks();
+    </script>
+</body>
+</html> -->
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load WebM Chunks Sequentially</title>
+</head>
+<body>
+    <video id="videoPlayer" controls></video>
+    <script>
+        async function fetchVideoChunk(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.arrayBuffer();
+        }
+
+        async function appendChunk(sourceBuffer, url) {
+            try {
+                const chunk = await fetchVideoChunk(url);
+                sourceBuffer.appendBuffer(chunk);
+                console.log(`Appended chunk from ${url}`);
+            } catch (error) {
+                console.error(`Error appending chunk from ${url}:`, error);
+            }
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function loadSegment(sourceBuffer, segmentIndex) {
+            const url = `/download/example_${segmentIndex}.webm`;
+            await appendChunk(sourceBuffer, url);
+        }
+
+        async function loadVideoChunks() {
+            const videoPlayer = document.getElementById('videoPlayer');
+            const mediaSource = new MediaSource();
+            let segmentIndex = 0;
+            const totalSegments = 3;
+
+            videoPlayer.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                console.log('MediaSource opened');
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+
+                sourceBuffer.addEventListener('updateend', async () => {
+                    console.log('SourceBuffer updateend');
+                    if (sourceBuffer.updating) return;
+
+                    segmentIndex++;
+                    if (segmentIndex < totalSegments) {
+                        await delay(5000); // Delay before loading the next segment
+                        await loadSegment(sourceBuffer, segmentIndex);
+                    } else if (mediaSource.readyState === 'open' && !sourceBuffer.updating) {
+                        console.log('All chunks appended, ending stream');
+                        mediaSource.endOfStream();
+                    }
+                });
+
+                await loadSegment(sourceBuffer, segmentIndex);
+            });
+
+            mediaSource.addEventListener('sourceended', () => {
+                console.log('MediaSource ended');
+            });
+
+            mediaSource.addEventListener('error', (e) => {
+                console.error('MediaSource error:', e);
+            });
+
+            mediaSource.addEventListener('sourceclose', () => {
+                console.log('MediaSource closed');
+            });
+        }
+
+        loadVideoChunks();
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load WebM Chunks Sequentially</title>
+</head>
+<body>
+    <video id="videoPlayer" controls></video>
+    <script>
+        async function fetchVideoChunk(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.arrayBuffer();
+        }
+
+        async function appendChunk(sourceBuffer, url) {
+            try {
+                const chunk = await fetchVideoChunk(url);
+                sourceBuffer.appendBuffer(chunk);
+                console.log(`Appended chunk from ${url}`);
+            } catch (error) {
+                console.error(`Error appending chunk from ${url}:`, error);
+            }
+        }
+
+        async function loadVideoChunks() {
+            const videoPlayer = document.getElementById('videoPlayer');
+            const mediaSource = new MediaSource();
+            const totalSegments = 3;
+            let segmentIndex = 0;
+
+            videoPlayer.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', async () => {
+                console.log('MediaSource opened');
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+
+                sourceBuffer.addEventListener('updateend', async () => {
+                    console.log('SourceBuffer updateend');
+                    segmentIndex++;
+                    if (segmentIndex < totalSegments) {
+                        const url = `/download/example_${segmentIndex}.webm`;
+                        await appendChunk(sourceBuffer, url);
+                    } else if (mediaSource.readyState === 'open') {
+                        console.log('All chunks appended, ending stream');
+                        mediaSource.endOfStream();
+                    }
+                });
+
+                // Start by loading the first segment
+                const firstUrl = `/download/example_${segmentIndex}.webm`;
+                await appendChunk(sourceBuffer, firstUrl);
+            });
+
+            mediaSource.addEventListener('sourceended', () => {
+                console.log('MediaSource ended');
+            });
+
+            mediaSource.addEventListener('error', (e) => {
+                console.error('MediaSource error:', e);
+            });
+
+            mediaSource.addEventListener('sourceclose', () => {
+                console.log('MediaSource closed');
+            });
+        }
+
+        loadVideoChunks();
+    </script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record">Stop Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let recordedBlobs;
+        let stream;
+        let uploadInterval;
+
+        const video = document.getElementById('video');
+        const startRecordButton = document.getElementById('start-record');
+        const stopRecordButton = document.getElementById('stop-record');
+
+        async function init() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing webcam: ', err);
+            }
+        }
+
+        startRecordButton.addEventListener('click', () => {
+            recordedBlobs = [];
+            const options = { mimeType: 'video/webm; codecs=vp9' };
+
+            try {
+                mediaRecorder = new MediaRecorder(stream, options);
+            } catch (e) {
+                console.error('Exception while creating MediaRecorder: ', e);
+                return;
+            }
+
+            mediaRecorder.onstop = (event) => {
+                console.log('Recorder stopped: ', event);
+            };
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedBlobs.push(event.data);
+                    uploadVideoChunk(event.data);
+                }
+            };
+
+            mediaRecorder.start(1000); // Collect 1 second of data at a time
+            console.log('MediaRecorder started', mediaRecorder);
+
+            uploadInterval = setInterval(() => {
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.requestData();
+                }
+            }, 1000);
+        });
+
+        stopRecordButton.addEventListener('click', () => {
+            mediaRecorder.stop();
+            clearInterval(uploadInterval);
+        });
+
+        async function uploadVideoChunk(blob) {
+            const formData = new FormData();
+            formData.append('video', blob, 'chunk.webm');
+
+            try {
+                const response = await fetch('http://localhost:3000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    console.log('Video chunk uploaded successfully!');
+                } else {
+                    console.log('Video chunk upload failed.');
+                }
+            } catch (err) {
+                console.error('Error uploading video chunk: ', err);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html> -->
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record">Stop Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let recordedBlobs;
+        let stream;
+        let mediaSource;
+        let sourceBuffer;
+
+        const video = document.getElementById('video');
+        const startRecordButton = document.getElementById('start-record');
+        const stopRecordButton = document.getElementById('stop-record');
+
+        async function init() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing webcam: ', err);
+            }
+        }
+
+        startRecordButton.addEventListener('click', () => {
+            recordedBlobs = [];
+            const options = { mimeType: 'video/webm; codecs=vp9' };
+
+            try {
+                mediaRecorder = new MediaRecorder(stream, options);
+            } catch (e) {
+                console.error('Exception while creating MediaRecorder: ', e);
+                return;
+            }
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedBlobs.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = (event) => {
+                mediaSource = new MediaSource();
+                video.src = URL.createObjectURL(mediaSource);
+                mediaSource.addEventListener('sourceopen', handleSourceOpen, false);
+            };
+
+            mediaRecorder.start(1000); // Collect 1 second of data at a time
+            console.log('MediaRecorder started', mediaRecorder);
+        });
+
+        stopRecordButton.addEventListener('click', () => {
+            mediaRecorder.stop();
+        });
+
+        function handleSourceOpen(event) {
+            sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp9"');
+            let currentBlob = 0;
+
+            const interval = setInterval(() => {
+                if (currentBlob < recordedBlobs.length) {
+                    sourceBuffer.appendBuffer(recordedBlobs[currentBlob++]);
+                } else {
+                    clearInterval(interval);
+                }
+            }, 100);
+        }
+
+        init();
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Camera to Server</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record">Stop Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let recordedBlobs;
+        let stream;
+        let uploadInterval;
+
+        const video = document.getElementById('video');
+        const startRecordButton = document.getElementById('start-record');
+        const stopRecordButton = document.getElementById('stop-record');
+
+        async function init() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing webcam: ', err);
+            }
+        }
+
+        startRecordButton.addEventListener('click', () => {
+            recordedBlobs = [];
+            const options = { mimeType: 'video/webm; codecs=vp9' };
+
+            try {
+                mediaRecorder = new MediaRecorder(stream, options);
+            } catch (e) {
+                console.error('Exception while creating MediaRecorder: ', e);
+                return;
+            }
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedBlobs.push(event.data);
+                    uploadVideoChunk(event.data);
+                }
+            };
+
+            mediaRecorder.start(1000); // Collect 1 second of data at a time
+            console.log('MediaRecorder started', mediaRecorder);
+
+            uploadInterval = setInterval(() => {
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.requestData();
+                }
+            }, 1000);
+        });
+
+        stopRecordButton.addEventListener('click', () => {
+            mediaRecorder.stop();
+            clearInterval(uploadInterval);
+        });
+
+        async function uploadVideoChunk(blob) {
+            const formData = new FormData();
+            formData.append('video', blob, 'chunk.webm');
+
+            try {
+                const response = await fetch('http://localhost:3000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    console.log('Video chunk uploaded successfully!');
+                } else {
+                    console.log('Video chunk upload failed.');
+                }
+            } catch (err) {
+                console.error('Error uploading video chunk: ', err);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
+

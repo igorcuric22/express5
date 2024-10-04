@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Stream and Upload</title>
+</head>
+<body>
+    <h1>Webcam Stream and Upload</h1>
+    <video id="videoElement" width="640" height="480" autoplay></video><br>
+    <button id="startButton">Start Streaming</button>
+    <button id="stopButton" style="display: none;">Stop Streaming</button>
+    <button id="uploadButton" style="display: none;">Upload</button>
+    <div id="status"></div>
+
+    <script>
+        let mediaRecorder;
+        let chunks = [];
+        let currentStream;
+
+        async function startStreaming() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const videoElement = document.getElementById('videoElement');
+                videoElement.srcObject = stream;
+
+                currentStream = stream;
+
+                // Function to start a new recording every 2 seconds
+                function startRecording() {
+                    mediaRecorder = new MediaRecorder(currentStream, { mimeType: 'video/webm; codecs=vp9' });
+
+                    mediaRecorder.ondataavailable = function(event) {
+                        if (event.data.size > 0) {
+                            chunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = function() {
+                        const blob = new Blob(chunks, { type: 'video/webm' });
+                        const videoUrl = URL.createObjectURL(blob);
+                        document.getElementById('videoElement').src = videoUrl;
+
+                        // Upload the blob to server
+                        uploadBlob(blob);
+
+                        chunks = []; // Clear chunks array
+                    };
+
+                    mediaRecorder.start(10000); // Start recording
+                }
+
+                // Start the initial recording
+                startRecording();
+
+                // Schedule to start a new recording every 10 seconds
+                setInterval(() => {
+                    mediaRecorder.stop(); // Stop the current recording
+                    startRecording(); // Start a new recording immediately
+                }, 10000);
+
+                // Update UI
+                document.getElementById('startButton').style.display = 'none';
+                document.getElementById('stopButton').style.display = 'inline-block';
+                document.getElementById('uploadButton').style.display = 'inline-block';
+
+            } catch (error) {
+                console.error('Error accessing media devices.', error);
+            }
+        }
+
+        function stopStreaming() {
+            mediaRecorder.stop();
+            document.getElementById('startButton').style.display = 'inline-block';
+            document.getElementById('stopButton').style.display = 'none';
+            document.getElementById('uploadButton').style.display = 'none';
+        }
+
+        async function uploadBlob(blob) {
+            const formData = new FormData();
+            formData.append('video', blob, 'video.webm');
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+
+                const result = await response.text();
+                document.getElementById('status').textContent = result;
+
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                document.getElementById('status').textContent = 'Upload failed';
+            }
+        }
+
+        document.getElementById('startButton').addEventListener('click', startStreaming);
+        document.getElementById('stopButton').addEventListener('click', stopStreaming);
+        document.getElementById('uploadButton').addEventListener('click', () => uploadBlob(new Blob(chunks, { type: 'video/webm' })));
+    </script>
+</body>
+</html>
